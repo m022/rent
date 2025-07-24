@@ -23,6 +23,15 @@ export async function POST(request: Request) {
   if (user && (await bcrypt.compare(body.password, user.password))) {
     const { password, ...userWithoutPass } = user
 
+    await prisma.user.update({ 
+      where: {
+        id: user.id,
+      },
+      data: {
+        updated_at: new Date(),
+      }
+    })
+    
     // 토큰 생성 
     const accessToken = signJwtAccessToken(userWithoutPass);
     const result = {

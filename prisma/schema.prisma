@@ -16,7 +16,10 @@ model User {
   password String // << 추가
   email String  @unique
   name  String?
+  profile String?
   posts Post[]
+  created_at DateTime @default(now())
+  updated_at DateTime?
 }
 
 model Post {
@@ -26,4 +29,5 @@ model Post {
   published Boolean @default(false)
   author    User    @relation(fields: [authorId], references: [id])
   authorId  Int
+  reated_at DateTime @default(now())
 }
