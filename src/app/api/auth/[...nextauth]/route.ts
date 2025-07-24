@@ -1,6 +1,8 @@
 import NextAuth from 'next-auth'
 import KakaoProvider from 'next-auth/providers/kakao'
+import NaverProvider from 'next-auth/providers/naver';
 import CredentialsProvider from 'next-auth/providers/credentials'
+import { signJwtAccessToken } from '@/app/lib/jwt';
 
 const handler = NextAuth({
     secret: process.env.NEXTAUTH_SECRET,
@@ -8,6 +10,10 @@ const handler = NextAuth({
         KakaoProvider({
             clientId: process.env.KAKAO_OAUTH_ID || '',
             clientSecret: process.env.KAKAO_OAUTH_SECRET || '',
+        }),
+        NaverProvider({
+            clientId: process.env.NAVER_OAUTH_ID || '',
+            clientSecret: process.env.NAVER_OAUTH_SECRET || '',
         }),
         // ID, PW 로그인 방식
         CredentialsProvider({
@@ -19,17 +25,17 @@ const handler = NextAuth({
 
             async authorize(credentials, req) {
                 const res = await fetch(`${process.env.NEXTAUTH_URL}/api/signin`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: credentials?.username,
-                    password: credentials?.password,
-                }),
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: credentials?.username,
+                        password: credentials?.password,
+                    }),
                 })
                 const user = await res.json()
-                console.log('$$$ user: ', user)
+                //console.log('$$$ user: ', user)
 
                 if (user) {
                     // Any object returned will be saved in `user` property of the JWT
@@ -46,12 +52,38 @@ const handler = NextAuth({
         }),        
     ],
     callbacks:{ 
-        async signIn({ user, account, profile, email, credentials }) {
-            console.log('$$$ signIn user: ', user)
-            console.log('$$$ signIn account: ', account)
-            console.log('$$$ signIn profile: ', profile)
-            console.log('$$$ signIn email: ', email)
-            console.log('$$$ signIn credentials: ', credentials)
+        async signIn({ user, account, profile, email, credentials }: any) {
+            //console.log('$$$ signIn user: ', user)
+            //console.log('$$$ signIn account: ', account)
+            //console.log('$$$ signIn profile: ', profile)
+            //console.log('$$$ signIn email: ', email)
+            //console.log('$$$ signIn credentials: ', credentials)
+
+            if (account.type === "oauth") {
+                const res = await fetch(`${process.env.NEXTAUTH_URL}/api/user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: account.type,
+                        name: user?.name,
+                        email: account.provider +"_"+ user?.id,
+                        //password: '',
+                        profile: user?.image,                      
+                    }),
+                })
+
+                const newuser = await res.json()
+                // 토큰 생성 
+                const accessToken = signJwtAccessToken(newuser);
+                user = {
+                    ...newuser,
+                    accessToken,
+                };
+
+                //console.log('$$$ signin oauth user: ', user)
+            }
             
             return true;
         },
@@ -64,6 +96,8 @@ const handler = NextAuth({
         },      
         // token 정보와 user 정보를 하나의 object로 return
         async jwt({ token, user }) {
+            console.log('$$$ callbacks jwt token: ', token)
+            console.log('$$$ callbacks jwt user: ', token)
              // 리턴되는 값들은 token에 저장된다.
             return { ...token, ...user};
         },
