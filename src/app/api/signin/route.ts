@@ -2,7 +2,7 @@
 
 import prisma from '@/app/lib/prismadb'
 import * as bcrypt from 'bcrypt'
-import { signJwtAccessToken } from '@/app/lib/jwt';
+//import { signJwtAccessToken } from '@/app/lib/jwt';
 
 interface RequestBody {
   username: string;
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   // 패스워드도 동일한지 확인
   if (user && (await bcrypt.compare(body.password, user.password))) {
-    const { password, ...userWithoutPass } = user
+    const { password, ...result } = user
 
     await prisma.user.update({ 
       where: {
@@ -33,11 +33,11 @@ export async function POST(request: Request) {
     })
     
     // 토큰 생성 
-    const accessToken = signJwtAccessToken(userWithoutPass);
-    const result = {
-        ...userWithoutPass,
-        accessToken,
-    };
+    // const accessToken = signJwtAccessToken(userWithoutPass);
+    // const result = {
+    //     ...userWithoutPass,
+    //     accessToken,
+    // };
 
     return new Response(JSON.stringify(result))
   } else return new Response(JSON.stringify(null))

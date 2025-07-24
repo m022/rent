@@ -4,7 +4,7 @@ import NaverProvider from 'next-auth/providers/naver';
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { signJwtAccessToken } from '@/app/lib/jwt';
 
-const handler = NextAuth({
+export const authOptions: any = {
     secret: process.env.NEXTAUTH_SECRET,
     providers: [
         KakaoProvider({
@@ -35,7 +35,7 @@ const handler = NextAuth({
                     }),
                 })
                 const user = await res.json()
-                //console.log('$$$ user: ', user)
+                console.log('$$$ user: ', user)
 
                 if (user) {
                     // Any object returned will be saved in `user` property of the JWT
@@ -53,11 +53,11 @@ const handler = NextAuth({
     ],
     callbacks:{ 
         async signIn({ user, account, profile, email, credentials }: any) {
-            //console.log('$$$ signIn user: ', user)
-            //console.log('$$$ signIn account: ', account)
-            //console.log('$$$ signIn profile: ', profile)
-            //console.log('$$$ signIn email: ', email)
-            //console.log('$$$ signIn credentials: ', credentials)
+            //console.log('$$$[callbacks signin] user: ', user)
+            //console.log('$$$[callbacks signin] account: ', account)
+            //console.log('$$$[callbacks signin] profile: ', profile)
+            //console.log('$$$[callbacks signin] email: ', email)
+            //console.log('$$$[callbacks signin] credentials: ', credentials)
 
             if (account.type === "oauth") {
                 const res = await fetch(`${process.env.NEXTAUTH_URL}/api/user`, {
@@ -74,40 +74,65 @@ const handler = NextAuth({
                     }),
                 })
 
-                const newuser = await res.json()
-                // 토큰 생성 
-                const accessToken = signJwtAccessToken(newuser);
-                user = {
-                    ...newuser,
-                    accessToken,
-                };
-
-                //console.log('$$$ signin oauth user: ', user)
+                user = await res.json()
+                console.log('$$$[callbacks signin] oauth user: ', user)
             }
+            
+            // 토큰 생성 
+            // const accessToken = signJwtAccessToken(user);
+            // user = {
+            //     ...user,
+            //     accessToken,
+            // };    
+
+            console.log('$$$[callbacks signin] user: ', user)
             
             return true;
         },
-        async redirect({ url, baseUrl }) {
+        async redirect({ url, baseUrl }: any) {
             // Allows relative callback URLs
             if (url.startsWith("/")) return `${baseUrl}${url}`
             // Allows callback URLs on the same origin
             else if (new URL(url).origin === baseUrl) return url
             return baseUrl
-        },      
+        }, 
+        async session({ session, user, token }: any) {
+            console.log('$$$[callbacks session] token: ', token)
+            session.user = token as any;
+            console.log('$$$[callbacks session] session: ', session)
+            return session;
+        },            
         // token 정보와 user 정보를 하나의 object로 return
-        async jwt({ token, user }) {
-            console.log('$$$ callbacks jwt token: ', token)
-            console.log('$$$ callbacks jwt user: ', token)
+        async jwt({ token, user, account, profile, trigger, isNewUser }: any) {
+            console.log('$$$[callbacks jwt] token: ', token)
+            console.log('$$$[callbacks jwt] user: ', user)
+            console.log('$$$[callbacks jwt] account: ', account)
+            console.log('$$$[callbacks jwt] profile: ', profile)
+            console.log('$$$[callbacks jwt] trigger: ', trigger)
              // 리턴되는 값들은 token에 저장된다.
             return { ...token, ...user};
-        },
-        async session({ session, token }) {
-            console.log('$$$ token: ', token)
-            session.user = token as any;
-            console.log('$$$ session: ', session)
-            return session;
+            //return token;
         },
     },
-});
+    session: {
+        strategy: "jwt",// 세션을 JWT 방식으로 관리
+        maxAge: 60 * 60 * 24 * 1,//세션만료기간 설정
+    },
+    debug: true, //콘솔에 디버그 정보 출력 활성화  
+    cookies: {
+        sessionToken: {
+            name: `session-token`,// 세션토큰 쿠키이름설정
+            options: {
+                httpOnly: true, //자바스크립트를 통한 쿠키 접근을 방지하여 XSS 공격으로부터 보호
+                sameSite: "lax", //CSRF 공격을 방지하고 일부 크로스 사이트 요청을 허용
+                path: "/", //쿠키가 전체 사이트에서 유효하도록 설정
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 60 * 60 * 24 * 1, //1일
+            },
+        },
+    },    
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST };
