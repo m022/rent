@@ -20,6 +20,8 @@ model User {
   posts      Post[]
   created_at DateTime  @default(now())
   updated_at DateTime?
+  provider   String?
+  auth_id    String?
 }
 
 model Post {
