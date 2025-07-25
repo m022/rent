@@ -118,7 +118,6 @@ export const authOptions: any = {
 
                 //토큰 생성 
                 //const accessToken = signJwtAccessToken(user);
-                
                 return { 
                     ...token,
                     ...user,

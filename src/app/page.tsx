@@ -61,7 +61,7 @@ export default function Home() {
               (session && session.user) ? (
                   // 로그인 되어있을 경우
                   <>
-                      <h3>{session.user.name}님 안녕하세요!</h3>
+                      <h3>{session.user.name}님  안녕하세요!</h3>
                       <button className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto" onClick={()=>signOut()}>
                           {session.user.name}님 LogOut
                       </button>
