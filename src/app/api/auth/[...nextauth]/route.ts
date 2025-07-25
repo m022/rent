@@ -68,14 +68,16 @@ export const authOptions: any = {
                     body: JSON.stringify({
                         type: account.type,
                         name: user?.name,
-                        email: account.provider +"_"+ user?.id,
+                        email: account.provider +"_"+ account.providerAccountId,
                         //password: '',
-                        profile: user?.image,                      
+                        profile: user?.image, 
+                        provider: account.provider,
+                        auth_id: account.providerAccountId,                      
                     }),
                 })
 
                 user = await res.json()
-                console.log('$$$[callbacks signin] oauth user: ', user)
+                console.log('$$$[callbacks][signin] oauth user: ', user)
             }
             
             // 토큰 생성 
@@ -85,8 +87,7 @@ export const authOptions: any = {
             //     accessToken,
             // };    
 
-            console.log('$$$[callbacks signin] user: ', user)
-            
+            console.log('$$$[callbacks][signin] user: ', user)
             return true;
         },
         async redirect({ url, baseUrl }: any) {
@@ -97,21 +98,38 @@ export const authOptions: any = {
             return baseUrl
         }, 
         async session({ session, user, token }: any) {
-            console.log('$$$[callbacks session] token: ', token)
+            console.log('$$$[callbacks][session] token: ', token)
+            // session.accessToken = token.accessToken;
+            // delete token.accessToken;
             session.user = token as any;
-            console.log('$$$[callbacks session] session: ', session)
+            console.log('$$$[callbacks][session] session: ', session)
             return session;
         },            
         // token 정보와 user 정보를 하나의 object로 return
-        async jwt({ token, user, account, profile, trigger, isNewUser }: any) {
-            console.log('$$$[callbacks jwt] token: ', token)
-            console.log('$$$[callbacks jwt] user: ', user)
-            console.log('$$$[callbacks jwt] account: ', account)
-            console.log('$$$[callbacks jwt] profile: ', profile)
-            console.log('$$$[callbacks jwt] trigger: ', trigger)
-             // 리턴되는 값들은 token에 저장된다.
-            return { ...token, ...user};
-            //return token;
+        async jwt({ token, user, account, profile, trigger, session }: any) {
+            console.log('$$$[callbacks][jwt] token: ', token)
+            console.log('$$$[callbacks][jwt] user: ', user)
+            console.log('$$$[callbacks][jwt] account: ', account)
+            console.log('$$$[callbacks][jwt] profile: ', profile)
+            console.log('$$$[callbacks][jwt] trigger: ', trigger)
+            console.log('$$$[callbacks][jwt] session: ', session)
+
+            if (user && account && trigger === "signIn") {   // 처음 로그인진입
+
+                //토큰 생성 
+                //const accessToken = signJwtAccessToken(user);
+                return { 
+                    ...token,
+                    ...user,
+                    accessToken: signJwtAccessToken(user),
+                };
+            }
+            else if(trigger === "update" && session) { // 업데이트 처리
+
+            }
+            
+            // 리턴되는 값들은 token에 저장된다.
+            return token;
         },
     },
     session: {

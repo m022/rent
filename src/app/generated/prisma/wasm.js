@@ -124,7 +124,9 @@ exports.Prisma.UserScalarFieldEnum = {
   name: 'name',
   profile: 'profile',
   created_at: 'created_at',
-  updated_at: 'updated_at'
+  updated_at: 'updated_at',
+  provider: 'provider',
+  auth_id: 'auth_id'
 };
 
 exports.Prisma.PostScalarFieldEnum = {

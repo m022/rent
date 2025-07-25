@@ -9,6 +9,8 @@ interface RequestBody {
   email: string;
   password: string;
   profile: string;
+  provider: string;
+  auth_id: string;
 }
 
 export async function POST(request: Request) {
@@ -41,11 +43,13 @@ export async function POST(request: Request) {
         email: body.email,
         password: (body.type) ? body.type : await bcrypt.hash(body.password, 10),
         profile: body.profile,
+        provider: body.provider,
+        auth_id: body.auth_id,
       },
     })
   }
 
   // user 객체에서 password 값은 제외
-  const { password, ...result } = user
+  const { password, ...result } = user;
   return new Response(JSON.stringify(result))
 }
